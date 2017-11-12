@@ -7,11 +7,8 @@ load('constants.js');
 function parse(path)
 {
     var raw_data = Files.readAllBytes(Paths.get(path));
-    var data = new Util(Java.from(raw_data));
-    print (data.len());
+    var data = new DataUtil(Java.from(raw_data));
     var mysql_version = from_version_id(data.uint32_at(0x0033));
-    
-    print (mysql_version.format());
     
     // keyinfo section
     var keyinfo_offset = data.uint16_at(0x0006);
@@ -68,14 +65,12 @@ function parse(path)
         path:path,
         keyinfo:keyinfo,
         defaults:defaults,
-        extrainfo:new Util(extrainfo),
+        extrainfo:new DataUtil(extrainfo),
         columns:column_data
     };
     
     var table = Table_from_data(data, packed_frm_data);
-    
-    
-    
+    print(JSON.stringify(table));
 }
 
 function Table_from_data(data, context) {
@@ -97,24 +92,52 @@ function Table_from_data(data, context) {
     var partition_info = null;
     
     var extrasize = extrainfo.len();
-    print (extrasize);
-    print (extrainfo.tell());
-    
     if (extrasize) {
         if (extrainfo.tell() < extrasize) {
             connection = extrainfo.bytes_prefix16();
-            connection = connection.decode('utf-8');
+            connection = stringFromBytes(connection);
         }
         if (extrainfo.tell() < extrasize) {
             engine = extrainfo.bytes_prefix16();
-            engine = engine.decode('utf-8');
+            engine = stringFromBytes(engine);
         }
         if (extrainfo.tell() < extrasize) {
             partition_info = extrainfo.bytes_prefix32();
-            partition_info = partition_info.decode('utf-8');
+            partition_info = stringFromBytes(partition_info);
         }
         extrainfo.skip(2);  // skip null + autopartition flag
     }
+    
+    if (!engine) {
+        // legacy_db_type
+        engine = LegacyDBType(data.uint8_at(0x0003));
+    }
+    else if (engine === 'partition') {
+        // default_part_db_type
+        // this is underlying storage engine of the partitioned table
+        engine = LegacyDBType(data.uint8_at(0x003d));
+    }
+    
+    return {
+        name : name,
+        mysql_version: mysql_version,
+        charset: charset,
+        options: {
+            connection: connection,
+            engine: engine,
+            charset: charset,
+            min_rows: min_rows,
+            max_rows: max_rows,
+            avg_row_length: avg_row_length,
+            handler_options: handler_options,
+            row_format: row_format,
+            key_block_size: key_block_size,
+            comment: '',
+            partitions: partition_info
+        },
+        columns: [],
+        keys: []
+    };
 }
 
 function guessTableNameFromFileName(path) {

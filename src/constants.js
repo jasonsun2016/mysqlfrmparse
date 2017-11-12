@@ -1,6 +1,41 @@
 
+var DBType_Map = {
+    0 : 'UNKNOWN',
+    1 : 'DIAB_ISAM',
+    2 : 'HASH',
+    3 : 'MISAM',
+    4 : 'PISAM',
+    5 : 'RMS_ISAM',
+    6 : 'HEAP',
+    7 : 'ISAM',
+    8 : 'MRG_ISAM',
+    9 : 'MyISAM',
+    10 : 'MRG_MYISAM',
+    11 : 'BERKELEYDB',
+    12 : 'InnoDB',
+    13 : 'GEMINI',
+    14 : 'NDBCLUSTER',
+    15 : 'EXAMPLE_DB',
+    16 : 'ARCHIVE_DB',
+    17 : 'CSV',
+    18 : 'FEDERATED',
+    19 : 'BLACKHOLE',
+    20 : 'PARTITION_DB',
+    21 : 'BINLOG',
+    22 : 'SOLID',
+    23 : 'PBXT',
+    24 : 'TABLE_FUNCTION',
+    25 : 'MEMCACHE',
+    26 : 'FALCON',
+    27 : 'MARIA',
+    28 : 'PERFORMANCE_SCHEMA',
+    42 : 'FIRST_DYNAMIC',
+    127 : 'DEFAULT'
+};
 
-
+function LegacyDBType(type_id) {
+    return DBType_Map[type_id];
+}
 
 
 

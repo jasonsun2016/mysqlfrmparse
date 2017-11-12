@@ -1,6 +1,6 @@
 #
 
-function Util(raw_data)
+function DataUtil(raw_data)
 {
     return {
         current_offset: 0,
@@ -15,7 +15,7 @@ function Util(raw_data)
         },
         
         skip: function(len) {
-            current_offset+=len;
+            this.current_offset+=len;
         },
         
         uint32_at: function(pos) {
@@ -37,6 +37,24 @@ function Util(raw_data)
             return b.map(function(e){return this.to_unsigned(e);}, this);
         },
         
+        bytes_prefix16: function() {
+            var len = this.uint16_at(this.current_offset);
+            this.current_offset += 2;
+            var offset = this.current_offset;
+            var b = this.read_at(len, offset);
+            this.current_offset += len;
+            return b;
+        },
+        
+        bytes_prefix32: function() {
+            var len = this.uint32_at(this.current_offset);
+            this.current_offset += 4;
+            var offset = this.current_offset;
+            var b = this.read_at(len, offset);
+            this.current_offset += len;
+            return b;
+        },
+        
         offset: function(new_offset){
             this.current_offset = new_offset;
         },
@@ -51,4 +69,9 @@ function Util(raw_data)
             return (val < 0) ? (val + 256): val;
         }
     };
+}
+
+function stringFromBytes(data, charset) {
+    charset = charset || 'UTF8';
+    return new java.lang.String(data, charset);
 }
