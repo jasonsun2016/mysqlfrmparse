@@ -51,13 +51,13 @@ function parse(path)
     
     data.offset(metadata_offset);
     var column_data = {
-            count: column_count,
-            null_count: null_fields,
-            metadata: data.read(metadata_length),
-            names: data.read(names_length),
-            labels: data.read(labels_length),
-            comments: data.read(comments_length),
-            defaults: defaults
+        count: column_count,
+        null_count: null_fields,
+        metadata: data.read(metadata_length),
+        names: data.read(names_length),
+        labels: data.read(labels_length),
+        comments: data.read(comments_length),
+        defaults: defaults
     };
     
     var packed_frm_data = {
@@ -70,8 +70,63 @@ function parse(path)
     };
     
     var table = Table_from_data(data, packed_frm_data);
-    print(JSON.stringify(table));
+    var columns = unpack_columns(packed_frm_data.columns, table);
 }
+
+
+function unpack_columns(packed_columns, table) {
+    var names = unpack_column_names(packed_columns.names);
+    var labels = unpack_column_labels(packed_columns.labels);
+    
+    var metadata = new DataUtil(packed_columns.metadata);
+    var defaults = new DataUtil(packed_columns.defaults);
+    var comments = new DataUtil(packed_columns.comments);
+
+    var _null_bytes = defaults.read(parseInt((packed_columns.null_count + 1 + 7) / 8));
+    var null_map = _null_bytes;
+    var null_bit = (table.options.handler_options.has('PACK_RECORD'))? 0: 1;
+    
+    var context = {null_map: null_map,
+                null_bit: null_bit,
+                table: table};
+}
+
+function unpack_column_names(names) {
+    var arr = names.slice(1, -2);
+    var start_pos = 0;
+    var names_arr = [];
+    while(start_pos < arr.length) {
+        var end = arr.indexOf(255, start_pos);
+        end = (end !== -1) ? end: arr.length;
+        names_arr.push(stringFromBytes(arr.slice(start_pos, end)));
+        start_pos = end + 1;
+    }
+    return names_arr;
+}
+
+function unpack_column_labels(labels) {
+    var arr = labels.slice(0, -1);
+    var start_pos = 0;
+    var labels_arr = [];
+    while(start_pos < arr.length) {
+        var end = arr.indexOf(0, start_pos);
+        end = (end !== -1) ? end: arr.length;
+        var group = arr.slice(start_pos, end);
+        group = group.slice(1,-1);
+        var inner_start_pos = 0;
+        var group_arr = [];
+        while(inner_start_pos < group.lenth) {
+            var inner_end = group.indexOf(255, inner_start_pos);
+            inner_end = (inner_end !== -1) ? inner_end: group.length;
+            group_arr.push(group.slice(inner_start_pos, inner_end));
+            inner_start_pos = inner_end + 1;
+        }
+        labels_arr.push(group_arr);
+        start_pos = end + 1;
+    }
+    return labels_arr;
+}
+
 
 function Table_from_data(data, context) {
     var extrainfo = context.extrainfo;
@@ -119,7 +174,8 @@ function Table_from_data(data, context) {
     }
     
     return {
-        name : name,
+        type: 'table',
+        name: name,
         mysql_version: mysql_version,
         charset: charset,
         options: {
