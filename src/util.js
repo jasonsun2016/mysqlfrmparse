@@ -23,6 +23,11 @@ function DataUtil(raw_data)
             return (this.to_unsigned(b[3]) << 24) + (this.to_unsigned(b[2]) << 16) + (this.to_unsigned(b[1]) << 8) + this.to_unsigned(b[0]);
         },
         
+        uint24_at: function(pos) {
+            var b = this.data.slice(pos, pos+3);
+            return (this.to_unsigned(b[2]) << 16) + (this.to_unsigned(b[1]) << 8) + this.to_unsigned(b[0]);
+        },
+        
         uint16_at: function(pos) {
             var b = this.data.slice(pos, pos+2);
             return (this.to_unsigned(b[1]) << 8) + this.to_unsigned(b[0]);
@@ -47,6 +52,31 @@ function DataUtil(raw_data)
             var len = this.uint32_at(this.current_offset);
             this.current_offset += 4;
             return this.read(len);
+        },
+        
+        uint24_at_pos: function(pos, from) {
+            return this.uint24_at(this.getSeekBegin(from) + pos);
+        },
+        
+        uint16_at_pos: function(pos, from) {
+            return this.uint16_at(this.getSeekBegin(from) + pos);
+        },
+        
+        uint8_at_pos: function(pos, from) {
+            return this.uint8_at(this.getSeekBegin(from) + pos);
+        },
+        
+        getSeekBegin: function(from) {
+            switch(from) {
+                case OS.SEEK_CUR:
+                    return this.current_offset;
+                case OS.SEEK_BEGIN:
+                    return 0;
+                case OS.SEEK_END:
+                    return len();
+                default:
+                    throw new Error("Invalid seek flag.");
+            }
         },
         
         offset: function(new_offset){
@@ -82,3 +112,9 @@ function mergeObject(obj1,obj2){
     for (var attrname in obj2) { obj3[attrname] = obj2[attrname]; }
     return obj3;
 }
+
+var OS = {
+    SEEK_BEGIN : 0,
+    SEEK_CUR : 1,
+    SEEK_END : 2
+};

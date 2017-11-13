@@ -37,6 +37,104 @@ function LegacyDBType(type_id) {
     return DBType_Map[type_id];
 }
 
+function Utype(type_id) {   
+    var utype_map = {
+        0 : 'NONE',
+        1 : 'DATE',
+        2 : 'SHIELD',
+        3 : 'NOEMPTY',
+        4 : 'CASEUP',
+        5 : 'PNR',
+        6 : 'BGNR',
+        7 : 'PGNR',
+        8 : 'YES',
+        9 : 'NO',
+        10 : 'REL',
+        11 : 'CHECK',
+        12 : 'EMPTY',
+        13 : 'UNKNOWN_FIELD',
+        14 : 'CASEDN',
+        15 : 'NEXT_NUMBER',
+        16 : 'INTERVAL_FIELD',
+        17 : 'BIT_FIELD',
+        18 : 'TIMESTAMP_OLD_FIELD',
+        19 : 'CAPITALIZE',
+        20 : 'BLOB_FIELD',
+        21 : 'TIMESTAMP_DN_FIELD',
+        22 : 'TIMESTAMP_UN_FIELD',
+        23 : 'TIMESTAMP_DNUN_FIELD'
+    };
+    return utype_map[type_id];
+}
+
+
+// include/mysql_com.h
+// enum enum_field_types { ... };
+function MySQLType(type_id) {
+    var MySQLType_map = {
+        0 : 'DECIMAL',
+        1 : 'TINY',
+        2 : 'SHORT',
+        3 : 'LONG',
+        4 : 'FLOAT',
+        5 : 'DOUBLE',
+        6 : 'NULL',
+        7 : 'TIMESTAMP',
+        8 : 'LONGLONG',
+        9 : 'INT24',
+        10 : 'DATE',
+        11 : 'TIME',
+        12 : 'DATETIME',
+        13 : 'YEAR',
+        14 : 'NEWDATE',
+        15 : 'VARCHAR',
+        16 : 'BIT',
+        17 : 'TIMESTAMP2',
+        18 : 'DATETIME2',
+        19 : 'TIME2',
+        246 : 'NEWDECIMAL',
+        247 : 'ENUM',
+        248 : 'SET',
+        249 : 'TINY_BLOB',
+        250 : 'MEDIUM_BLOB',
+        251 : 'LONG_BLOB',
+        252 : 'BLOB',
+        253 : 'VAR_STRING',
+        254 : 'STRING',
+        255 : 'GEOMETRY'
+    };
+    return MySQLType_map[type_id];
+}
+
+
+
+
+function FieldFlag(flags) {
+    var field_flag_bit = {
+        DECIMAL : 1,
+        BINARY : 1,
+        NUMBER : 2,
+        ZEROFILL : 4,
+        PACK : 120,
+        INTERVAL : 256,
+        BITFIELD : 512,
+        BLOB : 1024,
+        GEOM : 2048,
+        TREAT_BIT_AS_CHAR : 4096,
+        // defined, but not used in modern MySQL
+        // LEFT_FULLSCREEN : 8192,
+        NO_DEFAULT : 16384,
+        // defined, but not used in modern MySQL
+        // FORMAT_NUMBER : 16384,
+        // defined, but not used in modern MySQL
+        // RIGHT_FULLSCREEN : 16385,
+        // defined, but not used in modern MySQL
+        // SUM : 32768,
+        MAYBE_NULL : 32768,
+        HEX_ESCAPE : 0x10000
+    };
+    return BitFlags(field_flag_bit, flags);
+}
 
 
 function HaOption(data) {

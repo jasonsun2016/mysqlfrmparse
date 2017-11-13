@@ -89,6 +89,47 @@ function unpack_columns(packed_columns, table) {
     var context = {null_map: null_map,
                 null_bit: null_bit,
                 table: table};
+    var fieldnr = 0;
+    print(JSON.stringify(names));
+    for each(var name in names) {
+        var newContext = mergeObject(context, {
+            name: name,
+            fieldnr: fieldnr,
+            length: metadata.uint16_at_pos(3, OS.SEEK_CUR),
+            flags: FieldFlag(metadata.uint16_at_pos(8, OS.SEEK_CUR)),
+            unireg_check: Utype(metadata.uint8_at_pos(10, OS.SEEK_CUR)),
+            type_code: MySQLType(metadata.uint8_at_pos(13, OS.SEEK_CUR)),
+            labels: null
+        });
+        
+        //# Point context at the relevant set of labels for the current column
+        //# label_id start at 1 for valid labels but our python labels are std
+        //# zero offset. So we subtract 1 to fix the impedance mismatch. If
+        //# this goes negative, this is probably not an enum field
+        if (['ENUM', 'SET'].indexOf(context.type_code) > 0) {
+            var label_id = metadata.uint8_at_pos(12, OS.SEEK_CUR) - 1;
+            newContext = mergeObject(newContext, {labels:labels[label_id]});
+        }
+        
+        var defaults_offset = metadata.uint24_at_pos(5, OS.SEEK_CUR) - 1;
+        var comment_length = metadata.uint16_at_pos(15, OS.SEEK_CUR);
+
+        if (context.type_code !== 'GEOMETRY') {
+            var charset_id = (metadata.uint8_at_pos(11, OS.SEEK_CUR) << 8) + metadata.uint8_at_pos(14, OS.SEEK_CUR);
+            var subtype_code = 0;
+        }
+        else {
+            charset_id = 63;  // charset 'binary'
+            var subtype_code = metadata.uint8_at_pos(14, OS.SEEK_CUR);
+            subtype_code = constants.GeometryType(subtype_code);
+        }
+        
+        var charset = charsets_lookup(charset_id);
+        newContext = mergeObject(newContext, {subtype_code:subtype_code, charset:charset});
+        metadata.skip(17);
+        
+        print(JSON.stringify(newContext));
+    }
 }
 
 function unpack_column_names(names) {
