@@ -3,6 +3,7 @@ load('include.js');
 load('util.js');
 load('charsets.js');
 load('constants.js');
+load('mysqltypes.js');
 
 function parse(path)
 {
@@ -71,6 +72,7 @@ function parse(path)
     
     var table = Table_from_data(data, packed_frm_data);
     var columns = unpack_columns(packed_frm_data.columns, table);
+    print (JSON.stringify(columns));
 }
 
 
@@ -91,10 +93,11 @@ function unpack_columns(packed_columns, table) {
                 table: table};
     var fieldnr = 0;
     print(JSON.stringify(names));
-    for each(var name in names) {
+    return names.map(function(name) {
         var newContext = mergeObject(context, {
             name: name,
             fieldnr: fieldnr,
+            null_bit: null_bit,
             length: metadata.uint16_at_pos(3, OS.SEEK_CUR),
             flags: FieldFlag(metadata.uint16_at_pos(8, OS.SEEK_CUR)),
             unireg_check: Utype(metadata.uint8_at_pos(10, OS.SEEK_CUR)),
@@ -121,15 +124,31 @@ function unpack_columns(packed_columns, table) {
         else {
             charset_id = 63;  // charset 'binary'
             var subtype_code = metadata.uint8_at_pos(14, OS.SEEK_CUR);
-            subtype_code = constants.GeometryType(subtype_code);
+            subtype_code = GeometryType(subtype_code);
         }
         
         var charset = charsets_lookup(charset_id);
         newContext = mergeObject(newContext, {subtype_code:subtype_code, charset:charset});
         metadata.skip(17);
         
-        print(JSON.stringify(newContext));
-    }
+        defaults.offset(defaults_offset);
+        var default_val = mysqltypes_unpack_default(defaults, newContext);
+        null_bit = newContext.null_bit;
+        
+        var comment = stringFromBytes(comments.read(comment_length));
+        var attributes = [];  //??
+        
+        return {
+            type: 'Column',
+            name:name,
+            length:newContext.length,
+            type_code: newContext.type_code,
+            type_name: mysqltypes_format_type(newContext),
+            default: default_val,
+            attributes: attributes,
+            charset: charset,
+            comment: comment};
+    });
 }
 
 function unpack_column_names(names) {

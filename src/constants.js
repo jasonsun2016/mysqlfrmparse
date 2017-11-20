@@ -106,7 +106,19 @@ function MySQLType(type_id) {
     return MySQLType_map[type_id];
 }
 
-
+function GeometryType(subtype_code) {
+    var GeometryType_map = {
+        0 : 'GEOMETRY',
+        1 : 'POINT',
+        2 : 'LINESTRING',
+        3 : 'POLYGON',
+        4 : 'MULTIPOINT',
+        5 : 'MULTILINESTRING',
+        6 : 'MULTIPOLYGON',
+        7 : 'GEOMETRYCOLLECTION'
+    };
+    return GeometryType_map[subtype_code];
+}
 
 
 function FieldFlag(flags) {
