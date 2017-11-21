@@ -88,6 +88,10 @@ function DataUtil(raw_data)
             this.current_offset += len;
             return b.map(function(e){return this.to_unsigned(e);}, this);
         },
+        
+        number_for_bigendian_array: function(arr) {
+            return new java.math.BigInteger(arr);
+        },
 
         to_unsigned: function(val) {
             return (val < 0) ? (val + 256): val;
@@ -97,7 +101,11 @@ function DataUtil(raw_data)
 
 function stringFromBytes(data, charset) {
     charset = charset || 'UTF8';
-    return new java.lang.String(data, charset);
+    var str = new java.lang.String(data, charset);
+    if (str.indexOf(0xFFFD) > 0) { //UTF8 unmapped character
+        return new java.lang.String(data, "GB18030");
+    }
+    return str;
 }
 
 /**
@@ -112,6 +120,15 @@ function mergeObject(obj1,obj2){
     for (var attrname in obj2) { obj3[attrname] = obj2[attrname]; }
     return obj3;
 }
+
+
+function newFilledArray(len, fill) {
+    var arr = new Array(len);
+    for(var i = 0; i<len; i++)
+        arr[i] = fill;
+    return arr;
+}
+
 
 var OS = {
     SEEK_BEGIN : 0,

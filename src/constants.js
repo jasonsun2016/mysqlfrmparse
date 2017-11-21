@@ -33,6 +33,14 @@ var DBType_Map = {
     127 : 'DEFAULT'
 };
 
+var CONST_VALUE = {
+    PACK_SHIFT : 3,
+    DEC_SHIFT : 8,
+    MAX_DEC : 31,
+    NUM_SCREEN_TYPE : 0X7F01,
+    ALFA_SCREEN_TYPE : 0X7800
+};
+
 function LegacyDBType(type_id) {
     return DBType_Map[type_id];
 }
